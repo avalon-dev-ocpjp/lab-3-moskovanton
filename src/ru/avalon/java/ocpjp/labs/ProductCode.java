@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Класс описывает представление о коде товара и отражает соответствующую 
@@ -43,11 +46,13 @@ public class ProductCode {
      * @param set {@link ResultSet}, полученный в результате запроса, 
      * содержащего все поля таблицы PRODUCT_CODE базы данных Sample.
      */
-    private ProductCode(ResultSet set) {
+    private ProductCode(ResultSet set) throws SQLException {
         /*
          * TODO #05 реализуйте конструктор класса ProductCode
          */
-        throw new UnsupportedOperationException("Not implemented yet!");        
+        code = set.getString("prod_code");
+        discountCode = set.getString("discount_code").charAt(0);
+        description = set.getString("description");        
     }
     /**
      * Возвращает код товара
@@ -108,7 +113,7 @@ public class ProductCode {
         /*
          * TODO #06 Реализуйте метод hashCode
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return code.hashCode() + discountCode + description.hashCode();
     }
     /**
      * Сравнивает некоторый произвольный объект с текущим объектом типа 
@@ -123,7 +128,10 @@ public class ProductCode {
         /*
          * TODO #07 Реализуйте метод equals
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        if (this == obj) return true;
+        if (obj == null || obj.getClass() != getClass()) return false;
+        final ProductCode pc = (ProductCode) obj;
+        return Objects.equals(this, pc);
     }
     /**
      * Возвращает строковое представление кода товара.
@@ -135,7 +143,7 @@ public class ProductCode {
         /*
          * TODO #08 Реализуйте метод toString
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return "Product code: " + code + " , discount code: " + discountCode + " , description: " + description + " .";
     }
     /**
      * Возвращает запрос на выбор всех записей из таблицы PRODUCT_CODE 
@@ -143,12 +151,15 @@ public class ProductCode {
      * 
      * @param connection действительное соединение с базой данных
      * @return Запрос в виде объекта класса {@link PreparedStatement}
+     * @throws java.sql.SQLException
      */
     public static PreparedStatement getSelectQuery(Connection connection) throws SQLException {
         /*
          * TODO #09 Реализуйте метод getSelectQuery
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        if (connection == null) throw new IllegalArgumentException("No connection");
+        String selectQuery = "SELECT * FROM PRODUCT_CODE";
+        return connection.prepareStatement(selectQuery);
     }
     /**
      * Возвращает запрос на добавление записи в таблицу PRODUCT_CODE 
@@ -156,12 +167,15 @@ public class ProductCode {
      * 
      * @param connection действительное соединение с базой данных
      * @return Запрос в виде объекта класса {@link PreparedStatement}
+     * @throws java.sql.SQLException
      */
     public static PreparedStatement getInsertQuery(Connection connection) throws SQLException {
         /*
          * TODO #10 Реализуйте метод getInsertQuery
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        if (connection == null) throw new IllegalArgumentException("No connection");
+        String insertQuery = "INSERT INTO PRODUCT_CODE (PROD_CODE, DISCOUNT_CODE, DESCRIPTION) values (?, ?, ?)";
+        return connection.prepareStatement(insertQuery);
     }
     /**
      * Возвращает запрос на обновление значений записи в таблице PRODUCT_CODE 
@@ -169,12 +183,15 @@ public class ProductCode {
      * 
      * @param connection действительное соединение с базой данных
      * @return Запрос в виде объекта класса {@link PreparedStatement}
+     * @throws java.sql.SQLException
      */
     public static PreparedStatement getUpdateQuery(Connection connection) throws SQLException {
         /*
          * TODO #11 Реализуйте метод getUpdateQuery
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        if (connection == null) throw new IllegalArgumentException("No connection");
+        String updateQuery = "UPDATE PRODUCT_CODE " + "SET DISCOUNT_CODE = ?, DESCRIPTION = ? " + "WHERE PROD_CODE = ?";
+        return connection.prepareStatement(updateQuery);
     }
     /**
      * Преобразует {@link ResultSet} в коллекцию объектов типа {@link ProductCode}
@@ -188,7 +205,14 @@ public class ProductCode {
         /*
          * TODO #12 Реализуйте метод convert
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        List<ProductCode> pc = new ArrayList<>();
+        if (set != null) {
+            while (set.next()) {
+                pc.add(new ProductCode(set));
+            }
+            return pc;
+        }
+        throw new IllegalArgumentException("Empty");
     }
     /**
      * Сохраняет текущий объект в базе данных. 
@@ -198,12 +222,23 @@ public class ProductCode {
      * Если запись уже существует в базе данных, то выполняется запрос типа UPDATE.
      * 
      * @param connection действительное соединение с базой данных
+     * @throws java.sql.SQLException
      */
     public void save(Connection connection) throws SQLException {
         /*
          * TODO #13 Реализуйте метод convert
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Collection<ProductCode> pc = all(connection);
+        PreparedStatement st;
+        if (pc.contains(this)) {
+            st = getUpdateQuery(connection);
+        } else {
+            st = getInsertQuery(connection);
+        }
+        st.setString(1, code);
+        st.setString(2, String.valueOf(discountCode));
+        st.setString(3, description);
+        st.execute();
     }
     /**
      * Возвращает все записи таблицы PRODUCT_CODE в виде коллекции объектов
